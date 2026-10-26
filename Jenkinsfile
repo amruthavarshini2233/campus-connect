@@ -2,6 +2,8 @@ pipeline {
     agent any
 
     environment {
+        JAVA_HOME    = 'C:\\Program Files\\Java\\jdk-21.0.11'
+        PATH         = "C:\\Program Files\\Java\\jdk-21.0.11\\bin;C:\\Users\\amrutha\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin;${env.PATH}"
         APP_NAME     = 'campusconnect'
         DOCKER_IMAGE = 'campusconnect:latest'
     }
