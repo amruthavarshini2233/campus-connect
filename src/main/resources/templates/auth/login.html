@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Sign In')}"></head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<div th:replace="~{fragments/layout :: navbar('login')}"></div>
+
+<main class="auth-centered-wrapper">
+    <div class="auth-card-clean login-card">
+        <!-- Brand Header -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-4 p-3 mb-2">
+                <i class="bi bi-calendar2-event-fill fs-3 text-primary"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-1">Sign In to Your Account</h4>
+            <p class="text-secondary small mb-0">Access student event registrations, digital passes, and admin controls</p>
+        </div>
+
+        <!-- Alert Notifications -->
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show rounded-3 small mb-3 py-2" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-1"></i> Invalid email or password. Please verify and try again.
+        </div>
+        <div th:if="${param.logout}" class="alert alert-success alert-dismissible fade show rounded-3 small mb-3 py-2" role="alert">
+            <i class="bi bi-check-circle-fill me-1"></i> You have been securely signed out.
+        </div>
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show rounded-3 small mb-3 py-2" role="alert">
+            <i class="bi bi-check-circle-fill me-1"></i> <span th:text="${successMessage}">Success message</span>
+        </div>
+
+        <!-- Login Form -->
+        <form th:action="@{/login}" method="post" novalidate>
+            <div class="mb-3">
+                <label for="username" class="form-label small fw-bold text-dark mb-1">
+                    College Email <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text input-icon-left"><i class="bi bi-envelope"></i></span>
+                    <input type="email" id="username" name="username" class="form-control input-with-icon" 
+                           placeholder="student@college.edu" required autofocus>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="password" class="form-label small fw-bold text-dark mb-0">
+                        Password <span class="text-danger">*</span>
+                    </label>
+                </div>
+                <div class="input-group">
+                    <span class="input-group-text input-icon-left"><i class="bi bi-lock"></i></span>
+                    <input type="password" id="password" name="password" class="form-control input-with-icon" 
+                           placeholder="Enter your password" required>
+                    <button type="button" class="btn btn-password-toggle border" onclick="togglePasswordVisibility('password', this)" title="Show/Hide Password">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-indigo w-100 fw-bold py-2 mb-4 rounded-pill shadow-sm">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+            </button>
+        </form>
+
+        <!-- Cross Navigation -->
+        <div class="text-center text-secondary small">
+            Don't have an account yet? 
+            <a th:href="@{/register-account}" class="text-primary fw-bold text-decoration-none">Create Student Account</a>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<!-- Bootstrap Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+    function togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+</script>
+</body>
+</html>

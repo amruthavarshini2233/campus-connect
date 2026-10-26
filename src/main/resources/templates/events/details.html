@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${event.title})}"></head>
+<body>
+
+<!-- Navbar -->
+<div th:replace="~{fragments/layout :: navbar('explore')}"></div>
+
+<main class="container py-4 py-lg-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/explore}" class="text-decoration-none">Events</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="${event.title}">Event Details</li>
+        </ol>
+    </nav>
+
+    <!-- Error / Status Notice if any -->
+    <div th:if="${param.error}" class="alert alert-warning alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${param.error}">Registration alert</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Content Column -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <!-- Cover Image -->
+                <div style="height: 360px; position: relative; background-color: #0f172a;">
+                    <img th:if="${event.coverImageUrl != null && !#strings.isEmpty(event.coverImageUrl)}" 
+                         th:src="${event.coverImageUrl}" class="w-100 h-100 object-fit-cover" th:alt="${event.title}">
+                    <div th:unless="${event.coverImageUrl != null && !#strings.isEmpty(event.coverImageUrl)}" 
+                         class="d-flex align-items-center justify-content-center h-100 text-white">
+                        <i class="bi bi-calendar-event display-1 opacity-25"></i>
+                    </div>
+                    <div class="position-absolute top-0 start-0 m-3">
+                        <span class="badge-category" th:classappend="'badge-' + ${event.category}" th:text="${event.category}">Category</span>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <span class="badge" th:classappend="${event.statusBadgeClass}" th:text="${event.computedStatusText}">Status</span>
+                        <span class="text-secondary small" th:if="${event.organizer != null}">
+                            <i class="bi bi-building me-1"></i> Organized by <strong class="text-dark" th:text="${event.organizer}">Organizer</strong>
+                        </span>
+                    </div>
+
+                    <h1 class="h2 fw-bold text-dark mb-4" th:text="${event.title}">Event Title</h1>
+
+                    <h5 class="fw-semibold text-dark mb-3">About this Event</h5>
+                    <div class="text-secondary lh-lg mb-4" style="white-space: pre-line;" th:text="${event.description}">
+                        Full event description text...
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Cancellation Policy Notice -->
+                    <div class="bg-light p-3 rounded-3 text-secondary small d-flex align-items-start gap-2">
+                        <i class="bi bi-info-circle-fill text-primary fs-5 mt-n1"></i>
+                        <div>
+                            <strong class="text-dark">Cancellation Policy:</strong> 
+                            Registered attendees can cancel their registration up to 
+                            <span th:text="${event.cancellationCutoffHours}">24</span> hour(s) before event start time. 
+                            Cancelled tickets immediately restore seat availability for waitlisted peers.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / Registration Panel -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 90px;">
+                <h4 class="fw-bold mb-3 text-dark">Event Logistics</h4>
+
+                <div class="d-flex flex-column gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-calendar3 fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="small text-muted">Event Date</div>
+                            <div class="fw-semibold text-dark" th:text="${#temporals.format(event.eventDate, 'EEEE, dd MMMM yyyy')}">Date</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3" th:if="${event.startTime != null}">
+                        <div class="rounded-3 bg-info bg-opacity-10 text-info p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-clock fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="small text-muted">Start Time</div>
+                            <div class="fw-semibold text-dark" th:text="${#temporals.format(event.startTime, 'hh:mm a')}">Time</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-danger bg-opacity-10 text-danger p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-geo-alt fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="small text-muted">Campus Venue</div>
+                            <div class="fw-semibold text-dark" th:text="${event.venue}">Venue</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-warning bg-opacity-10 text-warning p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-hourglass-split fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="small text-muted">Registration Deadline</div>
+                            <div class="fw-semibold text-dark" th:if="${event.registrationDeadline != null}" 
+                                 th:text="${#temporals.format(event.registrationDeadline, 'dd MMM yyyy, hh:mm a')}">Deadline</div>
+                            <div class="fw-semibold text-dark" th:unless="${event.registrationDeadline != null}">Until event start</div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="mb-4">
+
+                <!-- Capacity & Live Seats Progress -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-muted">Seat Occupancy</span>
+                        <span class="fw-bold text-dark" th:text="${event.activeRegistrationsCount} + ' booked · ' + ${event.availableSeats} + ' seats left'">
+                            1 booked · 59 seats left
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 10px; border-radius: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar" 
+                             th:style="'width: ' + ${(event.activeRegistrationsCount * 100.0) / event.capacity} + '%;'" 
+                             th:aria-valuenow="${event.activeRegistrationsCount}" aria-valuemin="0" th:aria-valuemax="${event.capacity}">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mt-1">
+                        <span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i><span th:text="${event.availableSeats}">0</span> available</span>
+                        <span>Total Capacity: <span th:text="${event.capacity}">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Registration CTA Action Button States -->
+                <div th:if="${alreadyRegistered}">
+                    <div class="alert alert-success text-center mb-2 rounded-3 border-0 bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-check-circle-fill me-1 fs-5 align-middle"></i>
+                        <span class="fw-bold">You are already registered!</span>
+                    </div>
+                    <a th:href="@{/my-registrations}" class="btn btn-outline-success btn-lg w-100 fw-bold shadow-sm mb-2">
+                        <i class="bi bi-ticket-perforated me-1"></i> View My Event Pass
+                    </a>
+                </div>
+
+                <div th:unless="${alreadyRegistered}">
+                    <div th:if="${event.registrationOpen}">
+                        <a th:href="@{'/events/' + ${event.id} + '/register'}" class="btn btn-indigo btn-lg w-100 fw-bold shadow-sm">
+                            <i class="bi bi-pencil-square me-1"></i> Register for Event
+                        </a>
+                        <div class="text-center small text-muted mt-2">
+                            <i class="bi bi-shield-check text-success me-1"></i> Free registration for college students
+                        </div>
+                    </div>
+
+                    <div th:unless="${event.registrationOpen}">
+                        <div class="alert alert-secondary text-center mb-0 rounded-3">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            <span class="fw-semibold" th:text="${event.computedStatusText}">Registration Closed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<!-- Bootstrap Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Create Student Account')}"></head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<div th:replace="~{fragments/layout :: navbar('register')}"></div>
+
+<main class="auth-centered-wrapper">
+    <div class="auth-card-clean register-card">
+        <!-- Brand Header -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-4 p-3 mb-2">
+                <i class="bi bi-mortarboard-fill fs-3 text-primary"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-1">Create Student Account</h4>
+            <p class="text-secondary small mb-0">Join CampusConnect to discover campus events and secure digital attendance passes</p>
+        </div>
+
+        <!-- Error Notification -->
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-3 small mb-3 py-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> <span th:text="${errorMessage}">Error message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Registration Form -->
+        <form th:action="@{/register-account}" th:object="${registerForm}" method="post" novalidate>
+            <!-- Full Name -->
+            <div class="mb-3">
+                <label for="fullName" class="form-label small fw-bold text-dark mb-1">
+                    Full Name <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text input-icon-left"><i class="bi bi-person"></i></span>
+                    <input type="text" id="fullName" th:field="*{fullName}" class="form-control input-with-icon" 
+                           th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
+                           placeholder="e.g. Diya Patel" required autofocus>
+                </div>
+                <div class="invalid-feedback d-block small text-danger" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">Name error</div>
+            </div>
+
+            <!-- Email & Roll Number Row -->
+            <div class="row g-3 mb-3">
+                <div class="col-sm-7">
+                    <label for="email" class="form-label small fw-bold text-dark mb-1">
+                        College Email <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text input-icon-left"><i class="bi bi-envelope"></i></span>
+                        <input type="email" id="email" th:field="*{email}" class="form-control input-with-icon"
+                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                               placeholder="student@college.edu" required>
+                    </div>
+                    <div class="invalid-feedback d-block small text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Email error</div>
+                </div>
+
+                <div class="col-sm-5">
+                    <label for="rollNumber" class="form-label small fw-bold text-dark mb-1">
+                        Roll Number <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text input-icon-left"><i class="bi bi-card-text"></i></span>
+                        <input type="text" id="rollNumber" th:field="*{rollNumber}" class="form-control input-with-icon"
+                               th:classappend="${#fields.hasErrors('rollNumber')} ? 'is-invalid' : ''"
+                               placeholder="21CS042" required>
+                    </div>
+                    <div class="invalid-feedback d-block small text-danger" th:if="${#fields.hasErrors('rollNumber')}" th:errors="*{rollNumber}">Roll error</div>
+                </div>
+            </div>
+
+            <!-- Password & Confirm Password Row -->
+            <div class="row g-3 mb-2">
+                <div class="col-sm-6">
+                    <label for="password" class="form-label small fw-bold text-dark mb-1">
+                        Password <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text input-icon-left"><i class="bi bi-lock"></i></span>
+                        <input type="password" id="password" th:field="*{password}" class="form-control input-with-icon"
+                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
+                               placeholder="Min 6 characters" required>
+                        <button type="button" class="btn btn-password-toggle border" onclick="togglePasswordVisibility('password', this)" title="Show/Hide Password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="invalid-feedback d-block small text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password error</div>
+                </div>
+
+                <div class="col-sm-6">
+                    <label for="confirmPassword" class="form-label small fw-bold text-dark mb-1">
+                        Confirm Password <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text input-icon-left"><i class="bi bi-lock-fill"></i></span>
+                        <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-control input-with-icon"
+                               th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid' : ''"
+                               placeholder="Repeat password" required>
+                        <button type="button" class="btn btn-password-toggle border" onclick="togglePasswordVisibility('confirmPassword', this)" title="Show/Hide Password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="invalid-feedback d-block small text-danger" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}">Confirm error</div>
+                </div>
+            </div>
+
+            <div class="form-text small text-muted mb-4">
+                <i class="bi bi-shield-check me-1 text-success"></i> Passwords must be at least 6 characters and stored using BCrypt encryption.
+            </div>
+
+            <button type="submit" class="btn btn-indigo w-100 fw-bold py-2 mb-3 rounded-pill shadow-sm">
+                <i class="bi bi-person-check-fill me-1"></i> Register Student Account
+            </button>
+        </form>
+
+        <!-- Cross Navigation -->
+        <div class="text-center text-secondary small">
+            Already have an account? 
+            <a th:href="@{/login}" class="text-primary fw-bold text-decoration-none">Sign in to your account</a>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<!-- Bootstrap Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+    function togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+</script>
+</body>
+</html>

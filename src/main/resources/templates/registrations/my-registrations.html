@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('My Registrations & Event Passes')}"></head>
+<body>
+
+<!-- Navbar -->
+<div th:replace="~{fragments/layout :: navbar('my-registrations')}"></div>
+
+<main class="container py-4 py-lg-5">
+    <!-- Header / Student Profile Bar -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-indigo bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center" style="width: 58px; height: 58px;">
+                    <i class="bi bi-person-badge-fill fs-2"></i>
+                </div>
+                <div>
+                    <span class="badge bg-indigo-subtle text-primary fw-semibold px-2 py-1 rounded-pill small">STUDENT ACCOUNT</span>
+                    <h2 class="h3 fw-bold text-dark mb-0" th:text="${currentUser.fullName}">Student Name</h2>
+                    <div class="text-secondary small mt-1">
+                        <i class="bi bi-envelope me-1"></i> <span th:text="${currentUser.email}">student@college.edu</span>
+                        <span class="mx-2" th:if="${currentUser.rollNumber != null}">·</span>
+                        <i class="bi bi-card-text me-1" th:if="${currentUser.rollNumber != null}"></i> 
+                        <span th:if="${currentUser.rollNumber != null}" th:text="'Roll: ' + ${currentUser.rollNumber}">21CS001</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-3">
+                <div class="text-md-end px-3 py-2 bg-light rounded-3 border">
+                    <div class="h3 fw-bold text-success mb-0" th:text="${activeCount}">0</div>
+                    <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Active Passes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Notifications -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${successMessage}">Success message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${errorMessage}">Error message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Admin Filter Box (Only visible to ADMIN) -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light" sec:authorize="hasRole('ADMIN')">
+        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-check text-warning me-1"></i> Staff Inspection: Filter Student Passes</h6>
+        <form th:action="@{/my-registrations}" method="get" class="row g-2 align-items-center">
+            <div class="col-sm-8">
+                <input type="email" name="email" class="form-control" placeholder="Enter student email to inspect..." th:value="${lookupEmail}">
+            </div>
+            <div class="col-sm-4">
+                <button type="submit" class="btn btn-outline-secondary w-100">Filter Passes</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Passes Container -->
+    <div th:if="${!#lists.isEmpty(registrations)}">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-2">
+            <div>
+                <h4 class="fw-bold text-dark mb-0">
+                    Your Event Passes (<span th:text="${#lists.size(registrations)}">0</span>)
+                </h4>
+                <p class="text-secondary small mb-0">Present these digital passes at the event entrance for QR check-in.</p>
+            </div>
+            <a th:href="@{/explore}" class="btn btn-outline-indigo btn-sm fw-bold">
+                <i class="bi bi-plus-circle me-1"></i> Discover More Events
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4" th:each="reg : ${registrations}">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 d-flex flex-column bg-white">
+                    <div class="p-3 d-flex justify-content-between align-items-center border-bottom bg-light bg-opacity-50">
+                        <span class="badge-category" th:classappend="'badge-' + ${reg.event.category}" th:text="${reg.event.category}">Category</span>
+                        <span class="badge rounded-pill px-3 py-1" 
+                              th:classappend="${reg.status.name() == 'CONFIRMED'} ? 'bg-success bg-opacity-15 text-success' : 'bg-danger bg-opacity-15 text-danger'" 
+                              th:text="${reg.status}">CONFIRMED</span>
+                    </div>
+
+                    <div class="card-body p-4 flex-grow-1 d-flex flex-column">
+                        <h5 class="fw-bold text-dark mb-2">
+                            <a th:href="@{'/events/' + ${reg.event.id}}" class="text-decoration-none text-dark hover-indigo" th:text="${reg.event.title}">
+                                Event Title
+                            </a>
+                        </h5>
+
+                        <div class="small text-secondary mb-3">
+                            <div class="mb-1"><i class="bi bi-calendar3 text-primary me-2"></i><span th:text="${#temporals.format(reg.event.eventDate, 'dd MMMM yyyy')}">Date</span></div>
+                            <div class="mb-1"><i class="bi bi-geo-alt text-danger me-2"></i><span th:text="${reg.event.venue}">Venue</span></div>
+                            <div class="text-muted mt-2">
+                                <i class="bi bi-clock-history me-1"></i> Booked on <span th:text="${#temporals.format(reg.registeredAt, 'dd MMM yyyy, hh:mm a')}">Timestamp</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-light text-dark border font-monospace">
+                                    Ref: CC-REG-<span th:text="${reg.id}">001</span>
+                                </span>
+                                <!-- Email Status Badge -->
+                                <div>
+                                    <span th:if="${reg.confirmationEmailStatus == 'SENT'}" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 small" title="Delivered to your email">
+                                        <i class="bi bi-envelope-check-fill me-1"></i> Email Sent
+                                    </span>
+                                    <span th:if="${reg.confirmationEmailStatus == 'SIMULATED'}" class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25 small" title="Simulated mode in development">
+                                        <i class="bi bi-envelope-dash-fill me-1"></i> Simulated
+                                    </span>
+                                    <span th:if="${reg.confirmationEmailStatus == 'FAILED'}" class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 small" th:title="${reg.confirmationEmailError}">
+                                        <i class="bi bi-envelope-exclamation-fill me-1"></i> Email Failed
+                                    </span>
+                                    <span th:if="${reg.confirmationEmailStatus == null}" class="badge bg-light text-muted border small">
+                                        <i class="bi bi-clock me-1"></i> Email Pending
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center gap-2 pt-2 border-top border-light">
+                                <!-- Resend Confirmation Action Form -->
+                                <form th:if="${reg.status.name() == 'CONFIRMED'}" th:action="@{/my-registrations/resend-confirmation}" method="post" class="m-0">
+                                    <input type="hidden" name="registrationId" th:value="${reg.id}">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3" title="Resend pass to your registered email (60s cooldown applies)">
+                                        <i class="bi bi-send me-1"></i> Resend Pass
+                                    </button>
+                                </form>
+
+                                <!-- Cancellation Trigger Modal -->
+                                <button th:if="${reg.status.name() == 'CONFIRMED' && !reg.event.past}" 
+                                        type="button" class="btn btn-outline-danger btn-sm fw-semibold rounded-pill px-3 ms-auto"
+                                        data-bs-toggle="modal" th:data-bs-target="'#cancelModal-' + ${reg.id}">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel Pass
+                                </button>
+                                <span th:if="${reg.status.name() == 'CANCELLED'}" class="text-secondary small fw-semibold ms-auto">
+                                    <i class="bi bi-x-octagon me-1"></i> Pass Cancelled
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cancellation Modal -->
+                    <div class="modal fade" th:id="'cancelModal-' + ${reg.id}" tabindex="-1" aria-hidden="true" th:if="${reg.status.name() == 'CONFIRMED'}">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow rounded-4">
+                                <div class="modal-header border-0 pb-0">
+                                    <h5 class="modal-title fw-bold text-dark">Confirm Pass Cancellation</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body py-4">
+                                    <p class="text-secondary mb-3">
+                                        Are you sure you want to cancel your pass for <strong class="text-dark" th:text="${reg.event.title}">Event</strong>?
+                                    </p>
+                                    <div class="bg-warning bg-opacity-10 text-dark p-3 rounded-3 small">
+                                        <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+                                        Your seat will be released immediately for your fellow campus peers. Cancellations are permitted at least 
+                                        <span th:text="${reg.event.cancellationCutoffHours}">24</span> hour(s) before event start time.
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-0 pt-0">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Keep My Pass</button>
+                                    <form th:action="@{/my-registrations/cancel}" method="post">
+                                        <input type="hidden" name="registrationId" th:value="${reg.id}">
+                                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold">Confirm Cancellation</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(registrations)}" class="empty-state">
+        <div class="empty-state-icon text-muted">
+            <i class="bi bi-ticket-detailed"></i>
+        </div>
+        <h4 class="fw-bold mb-2">No Event Passes Found</h4>
+        <p class="text-secondary mb-4" style="max-width: 480px; margin: 0 auto;">
+            You haven't registered for any campus events yet. Explore hackathons, workshops, and technical talks to reserve your seats!
+        </p>
+        <a th:href="@{/explore}" class="btn btn-indigo rounded-pill px-4">
+            <i class="bi bi-compass me-1"></i> Discover Events
+        </a>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<!-- Bootstrap Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

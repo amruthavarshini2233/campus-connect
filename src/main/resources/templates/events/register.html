@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Event Pass Checkout')}"></head>
+<body class="bg-light">
+
+<!-- Navbar -->
+<div th:replace="~{fragments/layout :: navbar('explore')}"></div>
+
+<main class="container py-4 py-lg-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <!-- Breadcrumbs -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{'/events/' + ${event.id}}" class="text-decoration-none" th:text="${event.title}">Event Details</a></li>
+                    <li class="breadcrumb-item active text-muted" aria-current="page">Pass Checkout</li>
+                </ol>
+            </nav>
+
+            <!-- Checkout Card Container -->
+            <div class="auth-card-clean checkout-card mx-auto">
+                <!-- Event Summary Header Strip -->
+                <div class="p-3 bg-light rounded-4 border mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 52px; height: 52px;">
+                            <i class="bi bi-calendar2-check-fill fs-4 text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge-category" th:classappend="'badge-' + ${event.category}" th:text="${event.category}">Category</span>
+                                <span class="badge bg-success bg-opacity-10 text-success fw-bold small">
+                                    <i class="bi bi-ticket-perforated me-1"></i><span th:text="${event.availableSeats}">0</span> seats left
+                                </span>
+                            </div>
+                            <h5 class="fw-bold text-dark text-truncate mb-1" th:text="${event.title}">Event Title</h5>
+                            <div class="small text-muted d-flex flex-wrap align-items-center gap-2">
+                                <span><i class="bi bi-calendar3 me-1"></i><span th:text="${#temporals.format(event.eventDate, 'dd MMM yyyy')}">Date</span></span>
+                                <span th:if="${event.startTime != null}">&bull; <i class="bi bi-clock me-1"></i><span th:text="${#temporals.format(event.startTime, 'hh:mm a')}">Time</span></span>
+                                <span>&bull; <i class="bi bi-geo-alt me-1"></i><span th:text="${event.venue}">Venue</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Title -->
+                <div class="mb-4">
+                    <h4 class="fw-bold text-dark mb-1">Student Pass Checkout</h4>
+                    <p class="text-secondary small mb-0">
+                        Confirm your student credentials to claim your digital event pass and entry QR code.
+                    </p>
+                </div>
+
+                <!-- Error Banner -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-3 small mb-4 py-2" role="alert">
+                    <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                    <span th:text="${errorMessage}">Error message</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <!-- Form -->
+                <form th:action="@{'/events/' + ${event.id} + '/register'}" th:object="${registrationForm}" method="post" novalidate>
+                    <!-- Student Full Name -->
+                    <div class="mb-3">
+                        <label for="studentName" class="form-label small fw-bold text-dark mb-1">
+                            Full Name <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text input-icon-left"><i class="bi bi-person"></i></span>
+                            <input type="text" id="studentName" th:field="*{studentName}" class="form-control input-with-icon"
+                                   th:classappend="${#fields.hasErrors('studentName')} ? 'is-invalid' : ''"
+                                   placeholder="e.g. Diya Patel" required>
+                        </div>
+                        <div class="invalid-feedback d-block small text-danger" th:if="${#fields.hasErrors('studentName')}" th:errors="*{studentName}">
+                            Name error
+                        </div>
+                    </div>
+
+                    <!-- College Email -->
+                    <div class="mb-3">
+                        <label for="studentEmail" class="form-label small fw-bold text-dark mb-1">
+                            College Email <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text input-icon-left"><i class="bi bi-envelope"></i></span>
+                            <input type="email" id="studentEmail" th:field="*{studentEmail}" class="form-control input-with-icon"
+                                   th:classappend="${#fields.hasErrors('studentEmail')} ? 'is-invalid' : ''"
+                                   placeholder="student@college.edu" required>
+                        </div>
+                        <div class="form-text small text-muted">Your entry pass and registration confirmation will be sent to this email address.</div>
+                        <div class="invalid-feedback d-block small text-danger" th:if="${#fields.hasErrors('studentEmail')}" th:errors="*{studentEmail}">
+                            Email error
+                        </div>
+                    </div>
+
+                    <!-- Roll Number -->
+                    <div class="mb-4">
+                        <label for="rollNumber" class="form-label small fw-bold text-dark mb-1">
+                            Roll Number / Student ID <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text input-icon-left"><i class="bi bi-card-text"></i></span>
+                            <input type="text" id="rollNumber" th:field="*{rollNumber}" class="form-control input-with-icon"
+                                   th:classappend="${#fields.hasErrors('rollNumber')} ? 'is-invalid' : ''"
+                                   placeholder="e.g. 21CS042" required>
+                        </div>
+                        <div class="invalid-feedback d-block small text-danger" th:if="${#fields.hasErrors('rollNumber')}" th:errors="*{rollNumber}">
+                            Roll number error
+                        </div>
+                    </div>
+
+                    <!-- Trust and Anti-Duplicate Notice -->
+                    <div class="p-3 bg-light rounded-3 mb-4 small text-secondary border">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="bi bi-shield-check text-success fs-5"></i>
+                            <strong class="text-dark">Guaranteed Seat Allocation</strong>
+                        </div>
+                        <div class="small">
+                            Capacity: <strong class="text-dark"><span th:text="${event.capacity}">0</span> total</strong> &bull; 
+                            <strong class="text-primary"><span th:text="${event.activeRegistrationsCount}">0</span> confirmed</strong> &bull; 
+                            <strong class="text-success"><span th:text="${event.availableSeats}">0</span> remaining</strong>.
+                            Database pessmistic locking ensures no oversubscription or double booking.
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex flex-column flex-sm-row gap-3">
+                        <button type="submit" class="btn btn-indigo flex-grow-1 fw-bold py-2 rounded-pill shadow-sm">
+                            <i class="bi bi-ticket-perforated-fill me-1"></i> Claim Digital Pass
+                        </button>
+                        <a th:href="@{'/events/' + ${event.id}}" class="btn btn-outline-secondary fw-semibold py-2 rounded-pill px-4">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<!-- Bootstrap Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

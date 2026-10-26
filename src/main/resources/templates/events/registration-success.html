@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Registration Confirmed')}"></head>
+<body>
+
+<!-- Navbar -->
+<div th:replace="~{fragments/layout :: navbar('explore')}"></div>
+
+<main class="container py-4 py-lg-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <!-- Success Card -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white text-center p-4 p-md-5">
+                <div class="mb-3">
+                    <span class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle p-3" style="width: 72px; height: 72px;">
+                        <i class="bi bi-check-lg display-5 fw-bold"></i>
+                    </span>
+                </div>
+
+                <h2 class="fw-bold text-dark mb-2">Registration Confirmed!</h2>
+                <p class="text-secondary mb-3" th:text="${successMessage != null ? successMessage : 'Your seat has been reserved successfully in the college event database.'}">
+                    Your seat has been reserved successfully.
+                </p>
+
+                <!-- Email Delivery Status Notification Banner -->
+                <div th:if="${emailStatus != null}">
+                    <!-- Successful Live SMTP Delivery -->
+                    <div th:if="${emailStatus.success && !emailStatus.simulated}" 
+                         class="alert alert-success d-flex align-items-center justify-content-center gap-2 rounded-3 small mb-4 py-2">
+                        <i class="bi bi-envelope-check-fill fs-5 text-success"></i>
+                        <span><strong>Email Sent:</strong> An official confirmation pass has been dispatched to your inbox.</span>
+                    </div>
+
+                    <!-- Simulated Dev Mode Delivery -->
+                    <div th:if="${emailStatus.success && emailStatus.simulated}" 
+                         class="alert alert-info d-flex align-items-center justify-content-center gap-2 rounded-3 small mb-4 py-2">
+                        <i class="bi bi-info-circle-fill fs-5 text-info"></i>
+                        <span th:text="${emailStatus.message}">Email notification logged in local dev mode.</span>
+                    </div>
+
+                    <!-- SMTP Delivery Failed but Registration Preserved -->
+                    <div th:if="${!emailStatus.success}" 
+                         class="alert alert-warning d-flex align-items-center text-start gap-2 rounded-3 small mb-4 py-2">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
+                        <div>
+                            <strong>Note on Email Delivery:</strong> <span th:text="${emailStatus.message}">Delivery failed.</span>
+                            <div class="text-muted small">Your event seat is securely confirmed in the database. You can retrieve your pass anytime from <em>My Registrations</em>.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticket Pass Card UI -->
+                <div class="card border border-2 border-primary border-opacity-25 rounded-4 text-start p-4 mb-4 bg-light bg-opacity-50 position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge-category" th:classappend="'badge-' + ${event.category}" th:text="${event.category}">Category</span>
+                        <span class="badge bg-success py-2 px-3">
+                            <i class="bi bi-patch-check-fill me-1"></i> CONFIRMED PASS
+                        </span>
+                    </div>
+
+                    <h4 class="fw-bold text-dark mb-3" th:text="${event.title}">Event Title</h4>
+
+                    <div class="row g-3 small">
+                        <div class="col-sm-6">
+                            <div class="text-muted">Attendee Name</div>
+                            <div class="fw-bold text-dark" th:if="${registration != null}" th:text="${registration.studentName}">Student Name</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">Roll Number</div>
+                            <div class="fw-bold text-dark" th:if="${registration != null}" th:text="${registration.rollNumber}">21CS001</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">College Email</div>
+                            <div class="fw-semibold text-dark text-truncate" th:if="${registration != null}" th:text="${registration.studentEmail}">email@college.edu</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">Pass Reference ID</div>
+                            <div class="fw-bold text-primary" th:if="${registration != null}" th:text="'CC-REG-' + ${registration.id}">CC-REG-101</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">Date & Time</div>
+                            <div class="fw-semibold text-dark">
+                                <span th:text="${#temporals.format(event.eventDate, 'dd MMM yyyy')}">Date</span>
+                                <span th:if="${event.startTime != null}"> at <span th:text="${#temporals.format(event.startTime, 'hh:mm a')}">Time</span></span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-muted">Campus Venue</div>
+                            <div class="fw-semibold text-dark" th:text="${event.venue}">Venue</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTAs -->
+                <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+                    <a th:href="@{/my-registrations}" class="btn btn-indigo btn-lg fw-bold px-4">
+                        <i class="bi bi-ticket-perforated me-1"></i> View My Registrations
+                    </a>
+                    <a th:href="@{/}" class="btn btn-outline-secondary btn-lg fw-semibold px-4">
+                        <i class="bi bi-compass me-1"></i> Explore More Events
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<!-- Bootstrap Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
