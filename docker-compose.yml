@@ -1,0 +1,42 @@
+services:
+  # MySQL Database Service
+  db:
+    image: mysql:8.0
+    container_name: campusconnect-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: campusconnect
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # CampusConnect Spring Boot Web Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campusconnect-app
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/campusconnect?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SERVER_PORT=8081
+      - APP_MAIL_ENABLED=false
+      - ADMIN_EMAIL=admin@campusconnect.edu
+      - ADMIN_PASSWORD=Admin@12345
+
+volumes:
+  mysql_data:
