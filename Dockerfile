@@ -32,7 +32,10 @@ USER appuser
 # Expose default application port
 EXPOSE 8081
 
-# JVM memory configuration optimized for containerized environments
+# Default database connection to host MySQL and JVM memory constraints
+ENV SPRING_DATASOURCE_URL="jdbc:mysql://host.docker.internal:3306/campusconnect?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+ENV SPRING_DATASOURCE_USERNAME="root"
+ENV SPRING_DATASOURCE_PASSWORD=""
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
