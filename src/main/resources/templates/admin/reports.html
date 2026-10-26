@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reports & Analytics | Admin')}"></head>
+<body class="bg-light">
+
+<div class="admin-layout-wrapper">
+    <!-- Administration Sidebar (Clean 6 Modules - No Email Duplication) -->
+    <div th:replace="~{fragments/layout :: adminSidebar('reports')}"></div>
+
+    <!-- Main Content Area -->
+    <div class="admin-main-content">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">Institutional Reports &amp; Analytics</h5>
+                <small class="text-secondary">Visual performance dashboards, capacity utilization, and event popularity trends</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button onclick="window.print()" class="btn btn-outline-secondary btn-sm fw-semibold d-none d-md-inline-flex align-items-center gap-1">
+                    <i class="bi bi-printer me-1"></i> Print / Export PDF
+                </button>
+                <a th:href="@{/admin/events}" class="btn btn-outline-indigo btn-sm fw-semibold">
+                    <i class="bi bi-calendar2-week me-1"></i> Events
+                </a>
+                <a th:href="@{/admin/registrations}" class="btn btn-indigo btn-sm fw-bold">
+                    <i class="bi bi-people-fill me-1"></i> Registrations
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="p-3 p-md-4">
+            <!-- 4 Executive KPI Metric Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-xl-3">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Capacity Usage</span>
+                            <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-pie-chart-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-dark">
+                            <span th:text="${overallUtilization}">0</span>%
+                        </div>
+                        <div class="small text-muted d-flex align-items-center justify-content-between">
+                            <span><strong th:text="${stats.activeRegistrations}">0</strong> / <span th:text="${stats.totalCapacity}">0</span> seats filled</span>
+                            <span class="badge bg-indigo-subtle text-indigo rounded-pill px-2">Live</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Confirmed Passes</span>
+                            <div class="kpi-icon-box bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-ticket-perforated-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-success" th:text="${stats.activeRegistrations}">0</div>
+                        <div class="small text-muted d-flex align-items-center justify-content-between">
+                            <span>Verified student seats</span>
+                            <span class="badge bg-success-subtle text-success rounded-pill px-2">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Event Lifecycle</span>
+                            <div class="kpi-icon-box bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-activity"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-dark">
+                            <span th:text="${openCount}">0</span> <span class="fs-6 fw-semibold text-secondary">Open</span>
+                        </div>
+                        <div class="small text-muted d-flex align-items-center justify-content-between">
+                            <span><span th:text="${completedCount}">0</span> done &bull; <span th:text="${cancelledCount}">0</span> cancelled</span>
+                            <span class="badge bg-warning-subtle text-dark rounded-pill px-2">Scheduled</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Student Reach</span>
+                            <div class="kpi-icon-box bg-info bg-opacity-10 text-info">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-primary" th:text="${stats.totalStudents}">0</div>
+                        <div class="small text-muted d-flex align-items-center justify-content-between">
+                            <span>Registered campus users</span>
+                            <span class="badge bg-info-subtle text-primary rounded-pill px-2">Audience</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphical Charts Row 1: Popularity (Bar Chart) & Seat Capacity (Doughnut Gauge) -->
+            <div class="row g-4 mb-4">
+                <!-- Visual Chart 1: Event Popularity & Student Demand -->
+                <div class="col-lg-7 col-xl-8">
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                                    <i class="bi bi-bar-chart-fill text-indigo"></i>
+                                    Event Popularity by Student Demand
+                                </h6>
+                                <small class="text-muted">Top institutional events ranked by verified student registrations</small>
+                            </div>
+                            <span class="pill-metric-badge bg-indigo-subtle text-indigo">
+                                <i class="bi bi-graph-up-arrow"></i> Demand Ranking
+                            </span>
+                        </div>
+
+                        <!-- Canvas Container for Chart.js -->
+                        <div class="chart-canvas-container" style="min-height: 290px;">
+                            <canvas id="popularityChart"></canvas>
+                        </div>
+
+                        <div class="chart-legend-custom">
+                            <div class="chart-legend-item">
+                                <span class="chart-legend-dot" style="background-color: #6366f1;"></span>
+                                <span>Booked Registrations</span>
+                            </div>
+                            <div class="chart-legend-item">
+                                <span class="chart-legend-dot" style="background-color: #e2e8f0;"></span>
+                                <span>Total Seat Capacity</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Chart 2: Seat Capacity & Utilization Gauge -->
+                <div class="col-lg-5 col-xl-4">
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                                    <i class="bi bi-pie-chart-fill text-emerald"></i>
+                                    Seat Capacity Utilization
+                                </h6>
+                                <small class="text-muted">Live seat occupancy vs remaining capacity</small>
+                            </div>
+                            <span class="pill-metric-badge bg-emerald-subtle text-emerald">
+                                <i class="bi bi-check2-circle"></i> Capacity
+                            </span>
+                        </div>
+
+                        <!-- Canvas Container for Doughnut Gauge with Centered Stat -->
+                        <div class="chart-doughnut-wrap">
+                            <canvas id="capacityGaugeChart"></canvas>
+                            <div class="gauge-center-stat">
+                                <div class="gauge-percent"><span th:text="${overallUtilization}">0</span>%</div>
+                                <div class="gauge-label">Occupancy</div>
+                            </div>
+                        </div>
+
+                        <div class="chart-legend-custom justify-content-center">
+                            <div class="chart-legend-item">
+                                <span class="chart-legend-dot" style="background-color: #6366f1;"></span>
+                                <span>Booked: <strong th:text="${stats.activeRegistrations}">0</strong></span>
+                            </div>
+                            <div class="chart-legend-item">
+                                <span class="chart-legend-dot" style="background-color: #10b981;"></span>
+                                <span>Remaining: <strong th:text="${stats.availableCapacity}">0</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphical Charts Row 2: Category Distribution & Lifecycle Breakdown -->
+            <div class="row g-4 mb-4">
+                <!-- Visual Chart 3: Category Distribution -->
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                                    <i class="bi bi-grid-fill text-amber"></i>
+                                    Academic Category Distribution
+                                </h6>
+                                <small class="text-muted">Proportion of campus events organized by academic domain</small>
+                            </div>
+                            <span class="pill-metric-badge bg-amber-subtle text-amber">
+                                <i class="bi bi-tag-fill"></i> Domains
+                            </span>
+                        </div>
+
+                        <div class="chart-doughnut-wrap" style="height: 250px;">
+                            <canvas id="categoryDistributionChart"></canvas>
+                        </div>
+
+                        <div class="chart-legend-custom justify-content-center" id="categoryLegendContainer">
+                            <!-- Populated dynamically via JS or rendered cards -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Chart 4: Lifecycle & Publishing Status -->
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                                    <i class="bi bi-diagram-3-fill text-primary"></i>
+                                    Event Publishing Lifecycle
+                                </h6>
+                                <small class="text-muted">Distribution of scheduled open, concluded, and cancelled events</small>
+                            </div>
+                            <span class="pill-metric-badge bg-primary-subtle text-primary">
+                                <i class="bi bi-clock-history"></i> Status
+                            </span>
+                        </div>
+
+                        <div class="chart-doughnut-wrap" style="height: 250px;">
+                            <canvas id="lifecycleStatusChart"></canvas>
+                        </div>
+
+                        <div class="chart-legend-custom justify-content-center">
+                            <div class="chart-legend-item">
+                                <span class="chart-legend-dot" style="background-color: #10b981;"></span>
+                                <span>Open: <strong th:text="${openCount}">0</strong></span>
+                            </div>
+                            <div class="chart-legend-item">
+                                <span class="chart-legend-dot" style="background-color: #64748b;"></span>
+                                <span>Completed: <strong th:text="${completedCount}">0</strong></span>
+                            </div>
+                            <div class="chart-legend-item">
+                                <span class="chart-legend-dot" style="background-color: #ef4444;"></span>
+                                <span>Cancelled: <strong th:text="${cancelledCount}">0</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Chart.js 4.4 Library via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- Render Interactive Visual Charts -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Server-supplied data for Chart.js rendering
+    const popularTitles = /*[[${popularTitles}]]*/ [];
+    const popularBooked = /*[[${popularBooked}]]*/ [];
+    const popularCapacities = /*[[${popularCapacities}]]*/ [];
+
+    const categoryLabels = /*[[${categoryLabels}]]*/ [];
+    const categoryCounts = /*[[${categoryCounts}]]*/ [];
+
+    const bookedSeats = /*[[${stats.activeRegistrations}]]*/ 0;
+    const availableSeats = /*[[${stats.availableCapacity}]]*/ 0;
+
+    const openCount = /*[[${openCount}]]*/ 0;
+    const completedCount = /*[[${completedCount}]]*/ 0;
+    const cancelledCount = /*[[${cancelledCount}]]*/ 0;
+
+    // Palette tokens
+    const brandIndigo = '#6366f1';
+    const brandViolet = '#8b5cf6';
+    const brandEmerald = '#10b981';
+    const brandAmber = '#f59e0b';
+    const brandCyan = '#06b6d4';
+    const brandPink = '#ec4899';
+    const brandSlate = '#64748b';
+    const brandDanger = '#ef4444';
+    const bgTrack = '#e2e8f0';
+
+    // Chart.js global defaults
+    Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+    Chart.defaults.color = '#475569';
+    Chart.defaults.plugins.tooltip.backgroundColor = '#0f172a';
+    Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+    Chart.defaults.plugins.tooltip.bodyColor = '#e2e8f0';
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+    // 1. Chart: Event Popularity by Registrations (Horizontal Bar Chart)
+    const popCanvas = document.getElementById('popularityChart');
+    if (popCanvas) {
+        new Chart(popCanvas, {
+            type: 'bar',
+            data: {
+                labels: popularTitles.length > 0 ? popularTitles : ['No Events'],
+                datasets: [
+                    {
+                        label: 'Booked Registrations',
+                        data: popularBooked.length > 0 ? popularBooked : [0],
+                        backgroundColor: brandIndigo,
+                        borderRadius: 8,
+                        barThickness: 22,
+                        maxBarThickness: 30
+                    },
+                    {
+                        label: 'Total Capacity',
+                        data: popularCapacities.length > 0 ? popularCapacities : [0],
+                        backgroundColor: bgTrack,
+                        borderRadius: 8,
+                        barThickness: 22,
+                        maxBarThickness: 30
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.x + ' seats';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f1f5f9'
+                        },
+                        ticks: {
+                            precision: 0
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            callback: function(value, index, values) {
+                                const label = this.getLabelForValue(value);
+                                return label.length > 25 ? label.substring(0, 23) + '...' : label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Chart: Capacity Utilization Gauge (Semi-Doughnut / Doughnut)
+    const gaugeCanvas = document.getElementById('capacityGaugeChart');
+    if (gaugeCanvas) {
+        const hasCapacityData = (bookedSeats + availableSeats) > 0;
+        new Chart(gaugeCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Booked Seats', 'Available Seats'],
+                datasets: [{
+                    data: hasCapacityData ? [bookedSeats, availableSeats] : [0, 1],
+                    backgroundColor: hasCapacityData ? [brandIndigo, brandEmerald] : [bgTrack, bgTrack],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: hasCapacityData,
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' seats';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Chart: Academic Category Distribution
+    const catCanvas = document.getElementById('categoryDistributionChart');
+    if (catCanvas) {
+        const catPalette = [brandIndigo, brandAmber, brandCyan, brandPink, brandEmerald, brandViolet];
+        const hasCatData = categoryLabels.length > 0;
+
+        new Chart(catCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: hasCatData ? categoryLabels : ['None'],
+                datasets: [{
+                    data: hasCatData ? categoryCounts : [1],
+                    backgroundColor: hasCatData ? catPalette.slice(0, categoryLabels.length) : [bgTrack],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: hasCatData,
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' events';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Populate visual legend pills below category chart
+        const legendContainer = document.getElementById('categoryLegendContainer');
+        if (legendContainer && hasCatData) {
+            legendContainer.innerHTML = categoryLabels.map((lbl, idx) => `
+                <div class="chart-legend-item">
+                    <span class="chart-legend-dot" style="background-color: ${catPalette[idx % catPalette.length]};"></span>
+                    <span>${lbl}: <strong>${categoryCounts[idx]}</strong></span>
+                </div>
+            `).join('');
+        }
+    }
+
+    // 4. Chart: Event Lifecycle Status
+    const lifecycleCanvas = document.getElementById('lifecycleStatusChart');
+    if (lifecycleCanvas) {
+        const totalStatus = openCount + completedCount + cancelledCount;
+        new Chart(lifecycleCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Open / Scheduled', 'Completed', 'Cancelled'],
+                datasets: [{
+                    data: totalStatus > 0 ? [openCount, completedCount, cancelledCount] : [1, 0, 0],
+                    backgroundColor: totalStatus > 0 ? [brandEmerald, brandSlate, brandDanger] : [brandEmerald, brandSlate, brandDanger],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' events';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    /*]]>*/
+</script>
+
+<!-- Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

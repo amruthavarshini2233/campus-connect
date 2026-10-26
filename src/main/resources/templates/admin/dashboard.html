@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Admin Dashboard | Event Operations')}"></head>
+<body class="bg-light">
+
+<div class="admin-layout-wrapper">
+    <!-- Clean Administration-Focused Sidebar (No Student Navigation Duplication) -->
+    <div th:replace="~{fragments/layout :: adminSidebar('dashboard')}"></div>
+
+    <!-- Main Content Area -->
+    <div class="admin-main-content">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div class="d-flex align-items-center gap-2">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">Event Management Dashboard</h5>
+                    <small class="text-secondary">College operations, registrations, and live capacity tracking</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/admin/events/new}" class="btn btn-indigo btn-sm fw-bold px-3">
+                    <i class="bi bi-plus-lg me-1"></i> New Event
+                </a>
+                <a th:href="@{/}" class="btn btn-outline-secondary btn-sm fw-semibold" target="_blank">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> View Public Site
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="p-4">
+            <!-- Notifications -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                    <div>
+                        <strong class="d-block">Success</strong>
+                        <span th:text="${successMessage}">Success message</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                    <div>
+                        <strong class="d-block">Attention</strong>
+                        <span th:text="${errorMessage}">Error message</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- 4 Essential KPI Summary Metric Cards (Clickable to Filtered Management Pages) -->
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-xl-3">
+                    <a th:href="@{/admin/events}" class="text-decoration-none">
+                        <div class="kpi-card hover-shadow transition">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-secondary small fw-bold text-uppercase tracking-wider">Total Events</span>
+                                <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-calendar2-range"></i>
+                                </div>
+                            </div>
+                            <div class="kpi-number text-dark" th:text="${stats.totalEvents}">0</div>
+                            <div class="small text-muted">Click to view all events in catalog &rarr;</div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <a th:href="@{/admin/events(status='OPEN')}" class="text-decoration-none">
+                        <div class="kpi-card hover-shadow transition">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-secondary small fw-bold text-uppercase tracking-wider">Upcoming Events</span>
+                                <div class="kpi-icon-box bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-calendar-check"></i>
+                                </div>
+                            </div>
+                            <div class="kpi-number text-success" th:text="${stats.upcomingEvents}">0</div>
+                            <div class="small text-muted">Click to view scheduled open events &rarr;</div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <a th:href="@{/admin/registrations(status='CONFIRMED')}" class="text-decoration-none">
+                        <div class="kpi-card hover-shadow transition">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-secondary small fw-bold text-uppercase tracking-wider">Total Registrations</span>
+                                <div class="kpi-icon-box bg-info bg-opacity-10 text-info">
+                                    <i class="bi bi-ticket-perforated"></i>
+                                </div>
+                            </div>
+                            <div class="kpi-number text-primary" th:text="${stats.activeRegistrations}">0</div>
+                            <div class="small text-muted">Click to manage confirmed passes &rarr;</div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <a th:href="@{/admin/users}" class="text-decoration-none">
+                        <div class="kpi-card hover-shadow transition">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-secondary small fw-bold text-uppercase tracking-wider">Registered Students</span>
+                                <div class="kpi-icon-box bg-warning bg-opacity-10 text-warning">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                            </div>
+                            <div class="kpi-number text-dark" th:text="${stats.totalStudents}">0</div>
+                            <div class="small text-muted">Click to inspect student roster &rarr;</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Events Nearing Capacity Live Warning Strip -->
+            <div th:if="${!#lists.isEmpty(eventsNearingCapacity)}" class="card border-0 rounded-4 p-4 shadow-sm mb-4 bg-white border-start border-4 border-warning">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                        <h6 class="fw-bold mb-0 text-dark">Events Nearing Capacity (&gt;= 80% Full or &le; 10 Seats Left)</h6>
+                    </div>
+                    <span class="badge bg-warning bg-opacity-15 text-dark fw-bold rounded-pill px-3 py-1" th:text="${eventsNearingCapacity.size()} + ' Attention Required'">0 Required</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4" th:each="enc : ${eventsNearingCapacity}">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <div class="fw-bold text-dark text-truncate mb-1" th:text="${enc.title}">Event Title</div>
+                            <div class="small text-muted mb-2">
+                                <i class="bi bi-geo-alt me-1"></i><span th:text="${enc.venue}">Venue</span> &bull; 
+                                <span class="fw-semibold text-danger"><span th:text="${enc.availableSeats}">0</span> seats remaining</span>
+                            </div>
+                            <div class="progress mb-2" style="height: 6px;">
+                                <div class="progress-bar bg-danger" th:style="'width: ' + ${(enc.activeRegistrationsCount * 100.0) / enc.capacity} + '%;'"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center small">
+                                <span class="text-muted"><span th:text="${enc.activeRegistrationsCount}">0</span> / <span th:text="${enc.capacity}">0</span> booked</span>
+                                <a th:href="@{'/admin/events/' + ${enc.id} + '/participants'}" class="text-primary fw-bold text-decoration-none">
+                                    Participants <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 1: Category Distribution & Quick Management Actions -->
+            <div class="row g-4 mb-4">
+                <!-- Category Breakdown -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-dark mb-0">Event Category Breakdown</h5>
+                            <span class="badge bg-light text-secondary border">Active Programs</span>
+                        </div>
+                        <div class="d-flex flex-column gap-3">
+                            <div th:each="catEntry : ${stats.categoryCounts}" class="p-3 rounded-3 bg-light d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge-category" th:classappend="'badge-' + ${catEntry.key}" th:text="${catEntry.key}">Category</span>
+                                </div>
+                                <span class="fw-bold text-dark"><span th:text="${catEntry.value}">0</span> scheduled</span>
+                            </div>
+                            <div th:if="${#maps.isEmpty(stats.categoryCounts)}" class="text-center text-muted py-3">
+                                No event categories recorded.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Action Links (7 Admin Modules) -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-dark mb-0">Admin Management Hub</h5>
+                            <span class="badge bg-indigo bg-opacity-10 text-indigo fw-bold px-3 py-1 rounded-pill">Shortcuts</span>
+                        </div>
+                        <p class="text-secondary small mb-3">Institutional event operations, participant rosters, and analytics.</p>
+                        
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <a th:href="@{/admin/events/new}" class="card border rounded-3 p-3 text-decoration-none h-100 hover-shadow transition">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="bi bi-plus-circle text-primary fs-5"></i>
+                                        <span class="fw-bold text-dark small">Create Event</span>
+                                    </div>
+                                    <p class="text-secondary small mb-0">Publish an event with title, capacity, and deadlines.</p>
+                                </a>
+                            </div>
+                            <div class="col-sm-6">
+                                <a th:href="@{/admin/registrations}" class="card border rounded-3 p-3 text-decoration-none h-100 hover-shadow transition">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="bi bi-people-fill text-success fs-5"></i>
+                                        <span class="fw-bold text-dark small">Registrations</span>
+                                    </div>
+                                    <p class="text-secondary small mb-0">Search all student attendees, passes, and attendance.</p>
+                                </a>
+                            </div>
+                            <div class="col-sm-6">
+                                <a th:href="@{/admin/reports}" class="card border rounded-3 p-3 text-decoration-none h-100 hover-shadow transition">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="bi bi-bar-chart-line-fill text-primary fs-5"></i>
+                                        <span class="fw-bold text-dark small">Reports &amp; Analytics</span>
+                                    </div>
+                                    <p class="text-secondary small mb-0">Capacity usage, popularity rankings, and trends.</p>
+                                </a>
+                            </div>
+                            <div class="col-sm-6">
+                                <a th:href="@{/admin/users}" class="card border rounded-3 p-3 text-decoration-none h-100 hover-shadow transition">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="bi bi-person-lines-fill text-warning fs-5"></i>
+                                        <span class="fw-bold text-dark small">Student Directory</span>
+                                    </div>
+                                    <p class="text-secondary small mb-0">Search verified student accounts and registration history.</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Recent Registrations Live Feed -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">Recent Registrations</h5>
+                        <small class="text-muted">Live feed of student event bookings</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-primary border rounded-pill px-3 py-1 fw-bold" th:text="${recentRegistrations.size()} + ' Recent Records'">0 Recent Records</span>
+                        <a th:href="@{/admin/registrations}" class="btn btn-sm btn-outline-indigo rounded-pill px-3 fw-semibold">
+                            View All <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small">
+                            <tr>
+                                <th>Student</th>
+                                <th>College Email</th>
+                                <th>Roll No</th>
+                                <th>Event</th>
+                                <th>Registered At</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="reg : ${recentRegistrations}">
+                                <td>
+                                    <div class="fw-bold text-dark" th:text="${reg.studentName}">Student Name</div>
+                                    <small class="text-muted" th:text="'ID: CC-REG-' + ${reg.id}">CC-REG-1</small>
+                                </td>
+                                <td class="small" th:text="${reg.studentEmail}">student@college.edu</td>
+                                <td class="small fw-semibold" th:text="${reg.rollNumber}">21CS001</td>
+                                <td>
+                                    <a th:href="@{'/admin/events/' + ${reg.event.id} + '/participants'}" class="text-dark fw-semibold text-decoration-none hover-indigo text-truncate d-block" style="max-width: 200px;" th:text="${reg.event.title}">
+                                        Event Title
+                                    </a>
+                                </td>
+                                <td class="small text-muted" th:text="${#temporals.format(reg.registeredAt, 'dd MMM yyyy, hh:mm a')}">Date</td>
+                                <td>
+                                    <span class="badge rounded-pill px-2 py-1" 
+                                          th:classappend="${reg.status.name() == 'CONFIRMED'} ? 'bg-success bg-opacity-15 text-success' : 'bg-danger bg-opacity-15 text-danger'"
+                                          th:text="${reg.status.name()}">CONFIRMED</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentRegistrations)}">
+                                <td colspan="6" class="text-center text-muted py-4">No student registrations recorded yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

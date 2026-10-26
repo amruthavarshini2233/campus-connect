@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Event Participants | Admin')}"></head>
+<body class="bg-light">
+
+<div class="admin-layout-wrapper">
+    <!-- Administration Sidebar -->
+    <div th:replace="~{fragments/layout :: adminSidebar('events')}"></div>
+
+    <!-- Main Content Area -->
+    <div class="admin-main-content">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">Event Attendee Roster</h5>
+                <small class="text-secondary">Official student participant records, check-in reference IDs, and verification statuses</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{'/admin/events/' + ${event.id} + '/participants/export'}" class="btn btn-outline-success btn-sm fw-semibold">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+                </a>
+                <a th:href="@{'/admin/events/' + ${event.id} + '/edit'}" class="btn btn-outline-primary btn-sm fw-semibold">
+                    <i class="bi bi-pencil me-1"></i> Edit Event
+                </a>
+                <a th:href="@{/admin/events}" class="btn btn-outline-secondary btn-sm fw-semibold">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Events
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="p-4">
+
+            <!-- Event Overview Header Card -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <span class="badge-category" th:classappend="'badge-' + ${event.category}" th:text="${event.category}">Category</span>
+                        <h2 class="h4 fw-bold text-dark mt-2 mb-1" th:text="${event.title}">Event Title</h2>
+                        <div class="text-secondary small">
+                            <i class="bi bi-calendar3 text-primary me-1"></i> <span th:text="${#temporals.format(event.eventDate, 'dd MMMM yyyy')}">Date</span>
+                            <span class="mx-2">·</span>
+                            <i class="bi bi-geo-alt text-danger me-1"></i> <span th:text="${event.venue}">Venue</span>
+                            <span class="mx-2" th:if="${event.organizer != null}">·</span>
+                            <span th:if="${event.organizer != null}"><i class="bi bi-building me-1"></i> <span th:text="${event.organizer}">Organizer</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- 3 Metrics Strip -->
+                <div class="row g-3 text-center">
+                    <div class="col-4 stat-item">
+                        <div class="h3 fw-bold text-dark mb-0" th:text="${event.capacity}">0</div>
+                        <div class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem;">Capacity Limit</div>
+                    </div>
+                    <div class="col-4 stat-item">
+                        <div class="h3 fw-bold text-success mb-0" th:text="${activeCount}">0</div>
+                        <div class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem;">Confirmed Attendees</div>
+                    </div>
+                    <div class="col-4 stat-item">
+                        <div class="h3 fw-bold text-primary mb-0" th:text="${remainingSeats}">0</div>
+                        <div class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem;">Remaining Seats</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter and Search -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                <form th:action="@{'/admin/events/' + ${event.id} + '/participants'}" method="get" class="row g-3 align-items-end">
+                    <div class="col-md-7">
+                        <label for="keyword" class="form-label small fw-bold text-dark mb-1">Search Participant</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" id="keyword" name="keyword" class="form-control" 
+                                   placeholder="Search by student name, roll number, or email..." th:value="${keyword}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label small fw-bold text-dark mb-1">Status Filter</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="ALL" th:selected="${selectedStatus == 'ALL' || selectedStatus == null}">All Statuses</option>
+                            <option value="CONFIRMED" th:selected="${selectedStatus == 'CONFIRMED'}">CONFIRMED Only</option>
+                            <option value="CANCELLED" th:selected="${selectedStatus == 'CANCELLED'}">CANCELLED Only</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-indigo fw-bold flex-grow-1">
+                            <i class="bi bi-filter me-1"></i> Filter
+                        </button>
+                        <a th:href="@{'/admin/events/' + ${event.id} + '/participants'}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Participants Table -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0">
+                        Attendee Roster
+                        <span class="badge bg-light text-secondary border fs-6 ms-2" th:text="${participants.size()} + ' Records'">0 Records</span>
+                    </h5>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small">
+                            <tr>
+                                <th>Pass ID</th>
+                                <th>Student Name</th>
+                                <th>College Email</th>
+                                <th>Roll Number</th>
+                                <th>Registration Timestamp</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${participants}">
+                                <td>
+                                    <span class="font-monospace fw-bold text-primary" th:text="'CC-REG-' + ${p.id}">CC-REG-1</span>
+                                </td>
+                                <td class="fw-bold text-dark" th:text="${p.studentName}">Diya Patel</td>
+                                <td>
+                                    <span class="text-secondary" th:text="${p.studentEmail}">diya@college.edu</span>
+                                </td>
+                                <td>
+                                    <span class="font-monospace small fw-semibold text-secondary" th:text="${p.rollNumber}">21CS042</span>
+                                </td>
+                                <td class="small text-secondary" th:text="${#temporals.format(p.registeredAt, 'dd MMM yyyy, hh:mm a')}">
+                                    Timestamp
+                                </td>
+                                <td>
+                                    <span th:if="${p.status.name() == 'CONFIRMED'}" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
+                                        <i class="bi bi-check2-circle me-1"></i> CONFIRMED
+                                    </span>
+                                    <span th:if="${p.status.name() == 'CANCELLED'}" class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">
+                                        <i class="bi bi-dash-circle me-1"></i> CANCELLED
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(participants)}">
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-people fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                    No participant records found for this event matching your query.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

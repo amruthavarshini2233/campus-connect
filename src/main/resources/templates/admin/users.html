@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Student Management | Admin')}"></head>
+<body class="bg-light">
+
+<div class="admin-layout-wrapper">
+    <!-- Administration Sidebar (Clean 6 Modules) -->
+    <div th:replace="~{fragments/layout :: adminSidebar('users')}"></div>
+
+    <!-- Main Content Area -->
+    <div class="admin-main-content">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">Student Directory &amp; Accounts</h5>
+                <small class="text-secondary">Search verified student profiles, review enrollments, and manage account statuses</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/admin/registrations}" class="btn btn-outline-secondary btn-sm fw-semibold">
+                    <i class="bi bi-ticket-perforated me-1"></i> Registrations
+                </a>
+                <a th:href="@{/admin}" class="btn btn-outline-indigo btn-sm fw-semibold">
+                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="p-3 p-md-4">
+
+            <!-- Notifications -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                    <div>
+                        <strong class="d-block">Success</strong>
+                        <span th:text="${successMessage}">Success message</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                    <div>
+                        <strong class="d-block">Attention</strong>
+                        <span th:text="${errorMessage}">Error message</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- 3 Executive Micro-KPI Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Total Accounts</span>
+                            <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-dark" th:text="${users.size()}">0</div>
+                        <div class="small text-muted">Registered in database</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Verified Students</span>
+                            <div class="kpi-icon-box bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-mortarboard-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-success" th:text="${totalStudents}">0</div>
+                        <div class="small text-muted">Eligible for event passes</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Administrators</span>
+                            <div class="kpi-icon-box bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-shield-lock-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-dark" th:text="${users.size() - totalStudents}">1</div>
+                        <div class="small text-muted">Platform management staff</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Filter & Instant Live Search Bar -->
+            <div class="admin-filter-bar mb-4">
+                <div class="row g-3 align-items-center">
+                    <!-- Instant Live Search Input -->
+                    <div class="col-lg-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="userLiveSearch" class="form-control border-start-0 ps-0" 
+                                   placeholder="Type to search students by name, roll number, or email..." 
+                                   oninput="filterUsersLive()" th:value="${keyword}">
+                            <button class="btn btn-outline-secondary border-start-0" type="button" onclick="clearUserSearch()" title="Clear search">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Role Filter Tabs -->
+                    <div class="col-lg-6">
+                        <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                            <a th:href="@{/admin/users(role='ALL', keyword=${keyword})}" 
+                               class="pill-tab" th:classappend="${selectedRole == 'ALL' || selectedRole == null} ? 'active' : ''">
+                                <i class="bi bi-grid-fill"></i> All Accounts
+                                <span class="pill-count" th:text="${users.size()}">0</span>
+                            </a>
+                            <a th:href="@{/admin/users(role='ROLE_STUDENT', keyword=${keyword})}" 
+                               class="pill-tab" th:classappend="${selectedRole == 'ROLE_STUDENT'} ? 'active' : ''">
+                                <i class="bi bi-mortarboard-fill"></i> Students Only
+                            </a>
+                            <a th:href="@{/admin/users(role='ROLE_ADMIN', keyword=${keyword})}" 
+                               class="pill-tab" th:classappend="${selectedRole == 'ROLE_ADMIN'} ? 'active' : ''">
+                                <i class="bi bi-shield-lock-fill"></i> Admins
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Users Card & Table -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <div class="p-3 p-md-4 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-person-lines-fill text-indigo"></i>
+                            Account Roster
+                        </h6>
+                        <small class="text-muted" id="userCountLabel">
+                            Showing <span th:text="${users.size()}">0</span> accounts
+                        </small>
+                    </div>
+                    <span class="badge bg-indigo-subtle text-indigo rounded-pill px-3 py-1 fw-bold">Live Database</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table-modern align-middle mb-0" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Student / User</th>
+                                <th>Roll Number</th>
+                                <th>Role</th>
+                                <th>Account Status</th>
+                                <th>Member Since</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="u : ${users}" class="user-row" 
+                                th:data-name="${#strings.toLowerCase(u.fullName)}" 
+                                th:data-email="${#strings.toLowerCase(u.email)}" 
+                                th:data-roll="${#strings.toLowerCase(u.rollNumber != null ? u.rollNumber : '')}">
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <!-- Avatar Circle with Initial -->
+                                        <div class="user-avatar-circle" 
+                                             th:classappend="${u.role.name() == 'ROLE_ADMIN'} ? 'bg-amber-subtle text-amber' : 'bg-indigo-subtle text-indigo'"
+                                             th:text="${#strings.substring(u.fullName, 0, 1)}">
+                                            U
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark" th:text="${u.fullName}">User Full Name</div>
+                                            <small class="text-muted" th:text="${u.email}">user@college.edu</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span th:if="${u.rollNumber != null and !u.rollNumber.isBlank()}" 
+                                          class="badge bg-light text-dark border font-monospace px-2 py-1" 
+                                          th:text="${u.rollNumber}">21CS001</span>
+                                    <span th:unless="${u.rollNumber != null and !u.rollNumber.isBlank()}" class="text-muted">—</span>
+                                </td>
+                                <td>
+                                    <span th:if="${u.role.name() == 'ROLE_ADMIN'}" class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold">
+                                        <i class="bi bi-shield-lock-fill me-1"></i> Admin
+                                    </span>
+                                    <span th:if="${u.role.name() == 'ROLE_STUDENT'}" class="badge bg-indigo-subtle text-indigo rounded-pill px-3 py-1 fw-bold">
+                                        <i class="bi bi-mortarboard-fill me-1"></i> Student
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${u.enabled}" class="badge bg-success-subtle text-success rounded-pill px-3 py-1 fw-bold">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Active
+                                    </span>
+                                    <span th:unless="${u.enabled}" class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1 fw-bold">
+                                        <i class="bi bi-slash-circle-fill me-1"></i> Suspended
+                                    </span>
+                                </td>
+                                <td class="small">
+                                    <div class="fw-semibold text-dark" th:text="${#temporals.format(u.createdAt, 'dd MMM yyyy')}">Date</div>
+                                    <div class="text-muted" th:text="${#temporals.format(u.createdAt, 'hh:mm a')}">Time</div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex align-items-center gap-2">
+                                        <!-- View this student's registrations -->
+                                        <a th:if="${u.role.name() == 'ROLE_STUDENT'}" 
+                                           th:href="@{/admin/registrations(keyword=${u.email})}" 
+                                           class="btn btn-sm btn-outline-indigo rounded-pill px-3" 
+                                           title="View student passes">
+                                            <i class="bi bi-ticket-perforated me-1"></i> Passes
+                                        </a>
+
+                                        <!-- Toggle Status (Activate / Suspend) -->
+                                        <form th:if="${u.role.name() != 'ROLE_ADMIN'}" 
+                                              th:action="@{'/admin/users/' + ${u.id} + '/toggle-status'}" 
+                                              method="post" class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to change this account status?');">
+                                            <button type="submit" class="btn btn-sm rounded-pill px-3 fw-semibold"
+                                                    th:classappend="${u.enabled} ? 'btn-outline-danger' : 'btn-outline-success'">
+                                                <i class="bi" th:classappend="${u.enabled} ? 'bi-person-slash' : 'bi-person-check'"></i>
+                                                <span th:text="${u.enabled} ? 'Suspend' : 'Activate'">Toggle</span>
+                                            </button>
+                                        </form>
+
+                                        <span th:if="${u.role.name() == 'ROLE_ADMIN'}" class="badge bg-light text-muted border px-2 py-1">
+                                            Protected
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="noUsersRow" th:classappend="${users.isEmpty()} ? '' : 'd-none'">
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-people fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                    <span>No accounts found matching your query.</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Interactive Client-side Filter Script -->
+<script>
+    function filterUsersLive() {
+        const query = document.getElementById('userLiveSearch').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.user-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const name = row.getAttribute('data-name') || '';
+            const email = row.getAttribute('data-email') || '';
+            const roll = row.getAttribute('data-roll') || '';
+
+            if (!query || name.includes(query) || email.includes(query) || roll.includes(query)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const noRow = document.getElementById('noUsersRow');
+        if (noRow) {
+            noRow.classList.toggle('d-none', visibleCount > 0);
+        }
+
+        const countLabel = document.getElementById('userCountLabel');
+        if (countLabel) {
+            countLabel.innerHTML = `Showing <strong>${visibleCount}</strong> of ${rows.length} accounts`;
+        }
+    }
+
+    function clearUserSearch() {
+        const input = document.getElementById('userLiveSearch');
+        if (input) {
+            input.value = '';
+            filterUsersLive();
+        }
+    }
+</script>
+
+<!-- Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

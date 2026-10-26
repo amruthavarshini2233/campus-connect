@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Manage Events | Admin')}"></head>
+<body class="bg-light">
+
+<div class="admin-layout-wrapper">
+    <!-- Administration Sidebar (Clean 6 Modules) -->
+    <div th:replace="~{fragments/layout :: adminSidebar('events')}"></div>
+
+    <!-- Main Content Area -->
+    <div class="admin-main-content">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">Campus Event Management</h5>
+                <small class="text-secondary">Schedule, publish, adjust seat capacities, and inspect participant rosters</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/admin/events/new}" class="btn btn-indigo btn-sm fw-bold px-3 rounded-pill shadow-sm">
+                    <i class="bi bi-plus-lg me-1"></i> Create Event
+                </a>
+                <a th:href="@{/}" target="_blank" class="btn btn-outline-secondary btn-sm fw-semibold rounded-pill">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Student View
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="p-3 p-md-4">
+
+            <!-- Notifications -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                    <div>
+                        <strong class="d-block">Success</strong>
+                        <span th:text="${successMessage}">Success message</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                    <div>
+                        <strong class="d-block">Attention</strong>
+                        <span th:text="${errorMessage}">Error message</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- 3 Executive Micro-KPI Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Total Events</span>
+                            <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-calendar2-week-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-dark" th:text="${events.size()}">0</div>
+                        <div class="small text-muted">Institutional catalog</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Open for Registration</span>
+                            <div class="kpi-icon-box bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-calendar-check-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-success" th:text="${openCount}">0</div>
+                        <div class="small text-muted">Active and accepting students</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Total Seats Booked</span>
+                            <div class="kpi-icon-box bg-info bg-opacity-10 text-info">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-primary" th:text="${totalBookedSeats}">0</div>
+                        <div class="small text-muted">Active participant seats</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Filter & Instant Search Bar -->
+            <div class="admin-filter-bar mb-4">
+                <div class="row g-3 align-items-center">
+                    <!-- Instant Live Search Input -->
+                    <div class="col-lg-5">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="eventLiveSearch" class="form-control border-start-0 ps-0" 
+                                   placeholder="Filter events instantly by title, venue, or organizer..." 
+                                   oninput="filterEventsLive()" th:value="${keyword}">
+                            <button class="btn btn-outline-secondary border-start-0" type="button" onclick="clearEventSearch()" title="Clear search">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category & Status Tabs -->
+                    <div class="col-lg-7">
+                        <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                            <a th:href="@{/admin/events(category='All', status=${selectedStatus})}" 
+                               class="pill-tab" th:classappend="${category == 'All' || category == null} ? 'active' : ''">
+                                All Categories
+                            </a>
+                            <a th:href="@{/admin/events(category='Technical', status=${selectedStatus})}" 
+                               class="pill-tab" th:classappend="${category == 'Technical'} ? 'active' : ''">
+                                Technical
+                            </a>
+                            <a th:href="@{/admin/events(category='Workshop', status=${selectedStatus})}" 
+                               class="pill-tab" th:classappend="${category == 'Workshop'} ? 'active' : ''">
+                                Workshop
+                            </a>
+                            <a th:href="@{/admin/events(category='Hackathon', status=${selectedStatus})}" 
+                               class="pill-tab" th:classappend="${category == 'Hackathon'} ? 'active' : ''">
+                                Hackathon
+                            </a>
+                            <a th:href="@{/admin/events(category='Cultural', status=${selectedStatus})}" 
+                               class="pill-tab" th:classappend="${category == 'Cultural'} ? 'active' : ''">
+                                Cultural
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events Table Card -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <div class="p-3 p-md-4 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar2-range-fill text-indigo"></i>
+                            College Event Directory
+                        </h6>
+                        <small class="text-muted" id="eventCountLabel">
+                            Showing <span th:text="${events.size()}">0</span> events
+                        </small>
+                    </div>
+                    <a th:href="@{/admin/events/new}" class="btn btn-sm btn-indigo rounded-pill px-3 fw-bold">
+                        <i class="bi bi-plus-lg me-1"></i> New Event
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table-modern align-middle mb-0" id="eventsTable">
+                        <thead>
+                            <tr>
+                                <th>Event Details &amp; Category</th>
+                                <th>Date &amp; Schedule</th>
+                                <th>Venue</th>
+                                <th style="width: 190px;">Capacity &amp; Occupancy</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="ev : ${events}" class="event-row"
+                                th:data-title="${#strings.toLowerCase(ev.title)}"
+                                th:data-category="${#strings.toLowerCase(ev.category)}"
+                                th:data-venue="${#strings.toLowerCase(ev.venue)}"
+                                th:data-organizer="${#strings.toLowerCase(ev.organizer != null ? ev.organizer : '')}">
+                                <td>
+                                    <div class="fw-bold text-dark text-truncate" style="max-width: 250px;" th:text="${ev.title}">Event Title</div>
+                                    <div class="small text-muted d-flex align-items-center gap-2 mt-1">
+                                        <span class="badge-category" th:classappend="'badge-' + ${ev.category}" th:text="${ev.category}">Category</span>
+                                        <span th:if="${ev.organizer != null}" class="text-truncate" style="max-width: 140px;" th:text="${ev.organizer}">Organizer</span>
+                                    </div>
+                                </td>
+                                <td class="small">
+                                    <div class="fw-semibold text-dark d-flex align-items-center gap-1">
+                                        <i class="bi bi-calendar-event text-primary"></i>
+                                        <span th:text="${#temporals.format(ev.eventDate, 'dd MMM yyyy')}">Date</span>
+                                    </div>
+                                    <div class="text-muted mt-1" th:if="${ev.startTime != null}">
+                                        <i class="bi bi-clock me-1"></i><span th:text="${#temporals.format(ev.startTime, 'hh:mm a')}">Time</span>
+                                    </div>
+                                    <div class="text-muted mt-1" th:unless="${ev.startTime != null}">All Day</div>
+                                </td>
+                                <td class="small">
+                                    <div class="d-flex align-items-center gap-1 text-dark text-truncate" style="max-width: 150px;">
+                                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                                        <span th:text="${ev.venue}">Venue</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-between align-items-center small mb-1">
+                                        <span class="fw-bold text-dark"><span th:text="${ev.activeRegistrationsCount}">0</span> / <span th:text="${ev.capacity}">0</span></span>
+                                        <span class="fw-semibold" 
+                                              th:classappend="${ev.availableSeats <= 5 ? 'text-danger' : (ev.availableSeats <= 20 ? 'text-warning' : 'text-success')}"
+                                              th:text="${ev.availableSeats} + ' left'">0 left</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar" 
+                                             th:classappend="${ev.availableSeats <= 5 ? 'bg-danger' : (ev.availableSeats <= 20 ? 'bg-warning' : 'bg-success')}"
+                                             th:style="'width: ' + ${(ev.activeRegistrationsCount * 100.0) / (ev.capacity > 0 ? ev.capacity : 1)} + '%;'"></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" th:classappend="${ev.statusBadgeClass}" th:text="${ev.computedStatusText}">Status</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        <!-- Attendees Roster Button -->
+                                        <a th:href="@{'/admin/events/' + ${ev.id} + '/participants'}" 
+                                           class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1" 
+                                           title="Manage Attendees & Roster">
+                                            <i class="bi bi-people-fill me-1"></i> Roster
+                                        </a>
+
+                                        <!-- Edit Event Button -->
+                                        <a th:href="@{'/admin/events/' + ${ev.id} + '/edit'}" 
+                                           class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1" 
+                                           title="Edit Details">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <!-- Status Change Dropdown -->
+                                        <div class="dropdown d-inline">
+                                            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2 py-1 dropdown-toggle" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false" title="Change Event Status">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 small rounded-3">
+                                                <li class="dropdown-header small text-uppercase">Change Status</li>
+                                                <li th:if="${ev.status.name() != 'OPEN'}">
+                                                    <form th:action="@{'/admin/events/' + ${ev.id} + '/status'}" method="post">
+                                                        <input type="hidden" name="status" value="OPEN">
+                                                        <button type="submit" class="dropdown-item text-success">
+                                                            <i class="bi bi-check-circle me-2"></i> Reopen / Publish (OPEN)
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li th:if="${ev.status.name() != 'CANCELLED'}">
+                                                    <form th:action="@{'/admin/events/' + ${ev.id} + '/status'}" method="post"
+                                                          onsubmit="return confirm('Are you sure you want to cancel this event? Cancelled events are hidden from explore.');">
+                                                        <input type="hidden" name="status" value="CANCELLED">
+                                                        <button type="submit" class="dropdown-item text-warning">
+                                                            <i class="bi bi-slash-circle me-2"></i> Cancel Event (CANCELLED)
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li th:if="${ev.status.name() != 'COMPLETED'}">
+                                                    <form th:action="@{'/admin/events/' + ${ev.id} + '/status'}" method="post">
+                                                        <input type="hidden" name="status" value="COMPLETED">
+                                                        <button type="submit" class="dropdown-item text-secondary">
+                                                            <i class="bi bi-calendar-check me-2"></i> Mark Completed (COMPLETED)
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li th:if="${ev.activeRegistrationsCount == 0}"><hr class="dropdown-divider"></li>
+                                                <li th:if="${ev.activeRegistrationsCount == 0}">
+                                                    <form th:action="@{'/admin/events/' + ${ev.id} + '/delete'}" method="post"
+                                                          onsubmit="return confirm('Permanently delete this event? This action cannot be undone.');">
+                                                        <button type="submit" class="dropdown-item text-danger">
+                                                            <i class="bi bi-trash3 me-2"></i> Delete Permanently
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="noEventsRow" th:classappend="${events.isEmpty()} ? '' : 'd-none'">
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                    <span>No events found matching your query.</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Interactive Client-side Filter Script -->
+<script>
+    function filterEventsLive() {
+        const query = document.getElementById('eventLiveSearch').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.event-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const title = row.getAttribute('data-title') || '';
+            const cat = row.getAttribute('data-category') || '';
+            const venue = row.getAttribute('data-venue') || '';
+            const organizer = row.getAttribute('data-organizer') || '';
+
+            if (!query || title.includes(query) || cat.includes(query) || venue.includes(query) || organizer.includes(query)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const noRow = document.getElementById('noEventsRow');
+        if (noRow) {
+            noRow.classList.toggle('d-none', visibleCount > 0);
+        }
+
+        const countLabel = document.getElementById('eventCountLabel');
+        if (countLabel) {
+            countLabel.innerHTML = `Showing <strong>${visibleCount}</strong> of ${rows.length} events`;
+        }
+    }
+
+    function clearEventSearch() {
+        const input = document.getElementById('eventLiveSearch');
+        if (input) {
+            input.value = '';
+            filterEventsLive();
+        }
+    }
+</script>
+
+<!-- Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

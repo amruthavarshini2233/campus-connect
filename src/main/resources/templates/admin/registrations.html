@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Manage Registrations | Admin')}"></head>
+<body class="bg-light">
+
+<div class="admin-layout-wrapper">
+    <!-- Administration Sidebar (Clean 6 Modules) -->
+    <div th:replace="~{fragments/layout :: adminSidebar('registrations')}"></div>
+
+    <!-- Main Content Area -->
+    <div class="admin-main-content">
+        <!-- Topbar -->
+        <header class="admin-topbar">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">Participant Registrations</h5>
+                <small class="text-secondary">Global view and search of all student event registrations and pass delivery statuses</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/admin/events}" class="btn btn-outline-secondary btn-sm fw-semibold">
+                    <i class="bi bi-calendar2-week me-1"></i> Events
+                </a>
+                <a th:href="@{/admin}" class="btn btn-outline-indigo btn-sm fw-semibold">
+                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="p-3 p-md-4">
+
+            <!-- 3 Executive Micro-KPI Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Total Passes Issued</span>
+                            <div class="kpi-icon-box bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-ticket-perforated-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-dark" th:text="${registrations.size()}">0</div>
+                        <div class="small text-muted">All-time student bookings</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Confirmed Active</span>
+                            <div class="kpi-icon-box bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-check2-circle"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-success" th:text="${confirmedCount}">0</div>
+                        <div class="small text-muted">Valid passes for campus entry</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4">
+                    <div class="kpi-card hover-shadow transition">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small fw-bold text-uppercase tracking-wider">Cancelled / Recycled</span>
+                            <div class="kpi-icon-box bg-secondary bg-opacity-10 text-secondary">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-number text-secondary" th:text="${cancelledCount}">0</div>
+                        <div class="small text-muted">Seats reopened to other peers</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Filter & Instant Search Bar -->
+            <div class="admin-filter-bar mb-4">
+                <div class="row g-3 align-items-center">
+                    <!-- Instant Live Search Input -->
+                    <div class="col-lg-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="regLiveSearch" class="form-control border-start-0 ps-0" 
+                                   placeholder="Search attendee, roll number, pass ID (e.g. CC-REG-1), or event..." 
+                                   oninput="filterRegistrationsLive()" th:value="${keyword}">
+                            <button class="btn btn-outline-secondary border-start-0" type="button" onclick="clearRegSearch()" title="Clear search">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Status Filter Tabs -->
+                    <div class="col-lg-6">
+                        <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                            <a th:href="@{/admin/registrations(status='ALL', keyword=${keyword})}" 
+                               class="pill-tab" th:classappend="${selectedStatus == 'ALL' || selectedStatus == null} ? 'active' : ''">
+                                <i class="bi bi-grid-fill"></i> All Passes
+                                <span class="pill-count" th:text="${registrations.size()}">0</span>
+                            </a>
+                            <a th:href="@{/admin/registrations(status='CONFIRMED', keyword=${keyword})}" 
+                               class="pill-tab" th:classappend="${selectedStatus == 'CONFIRMED'} ? 'active' : ''">
+                                <i class="bi bi-check-circle-fill"></i> Confirmed Only
+                            </a>
+                            <a th:href="@{/admin/registrations(status='CANCELLED', keyword=${keyword})}" 
+                               class="pill-tab" th:classappend="${selectedStatus == 'CANCELLED'} ? 'active' : ''">
+                                <i class="bi bi-dash-circle-fill"></i> Cancelled Only
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registrations Table Card -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <div class="p-3 p-md-4 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-ticket-detailed-fill text-indigo"></i>
+                            Digital Pass Roster
+                        </h6>
+                        <small class="text-muted" id="regCountLabel">
+                            Showing <span th:text="${registrations.size()}">0</span> passes
+                        </small>
+                    </div>
+                    <span class="badge bg-indigo-subtle text-indigo rounded-pill px-3 py-1 fw-bold">Live Passes</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table-modern align-middle mb-0" id="registrationsTable">
+                        <thead>
+                            <tr>
+                                <th>Pass Reference</th>
+                                <th>Student Attendee</th>
+                                <th>Event Details</th>
+                                <th>Booking Date</th>
+                                <th>Pass Status</th>
+                                <th>Delivery Status</th>
+                                <th class="text-end">Event Roster</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="reg : ${registrations}" class="reg-row"
+                                th:data-pass="${#strings.toLowerCase('CC-REG-' + reg.id)}"
+                                th:data-name="${#strings.toLowerCase(reg.studentName)}"
+                                th:data-email="${#strings.toLowerCase(reg.studentEmail)}"
+                                th:data-roll="${#strings.toLowerCase(reg.rollNumber != null ? reg.rollNumber : '')}"
+                                th:data-event="${#strings.toLowerCase(reg.event.title)}">
+                                <td>
+                                    <span class="font-monospace fw-bold text-primary px-2 py-1 bg-primary-subtle rounded-2" 
+                                          th:text="'CC-REG-' + ${reg.id}">CC-REG-1</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="user-avatar-circle bg-indigo-subtle text-indigo" 
+                                             style="width: 32px; height: 32px; font-size: 0.75rem;"
+                                             th:text="${#strings.substring(reg.studentName, 0, 1)}">A</div>
+                                        <div>
+                                            <div class="fw-bold text-dark" th:text="${reg.studentName}">Student Name</div>
+                                            <small class="text-muted" th:text="${reg.studentEmail}">email@college.edu</small>
+                                            <span class="badge bg-light text-secondary border font-monospace ms-1" 
+                                                  style="font-size: 0.65rem;" th:text="${reg.rollNumber}">21CS001</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a th:href="@{'/admin/events/' + ${reg.event.id} + '/participants'}" 
+                                       class="fw-bold text-dark text-decoration-none hover-indigo text-truncate d-block" 
+                                       style="max-width: 220px;" th:text="${reg.event.title}">
+                                        Event Title
+                                    </a>
+                                    <div class="small text-muted d-flex align-items-center gap-1 mt-1">
+                                        <span class="badge-category" th:classappend="'badge-' + ${reg.event.category}" th:text="${reg.event.category}">Category</span>
+                                        <span>&bull;</span>
+                                        <i class="bi bi-calendar-event text-secondary"></i>
+                                        <span th:text="${#temporals.format(reg.event.eventDate, 'dd MMM yyyy')}">Date</span>
+                                    </div>
+                                </td>
+                                <td class="small">
+                                    <div class="fw-semibold text-dark" th:text="${#temporals.format(reg.registeredAt, 'dd MMM yyyy')}">Date</div>
+                                    <div class="text-muted" th:text="${#temporals.format(reg.registeredAt, 'hh:mm a')}">Time</div>
+                                </td>
+                                <td>
+                                    <span th:if="${reg.status.name() == 'CONFIRMED'}" class="badge bg-success-subtle text-success rounded-pill px-3 py-1 fw-bold">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Confirmed
+                                    </span>
+                                    <span th:if="${reg.status.name() == 'CANCELLED'}" class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-1 fw-bold">
+                                        <i class="bi bi-dash-circle-fill me-1"></i> Cancelled
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${reg.confirmationEmailStatus == 'SENT'}" class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small fw-bold" title="Delivered via live SMTP">
+                                        <i class="bi bi-envelope-check-fill me-1"></i> Sent
+                                    </span>
+                                    <span th:if="${reg.confirmationEmailStatus == 'SIMULATED'}" class="badge bg-warning-subtle text-dark rounded-pill px-2 py-1 small fw-bold" title="Console simulation">
+                                        <i class="bi bi-envelope-paper-fill me-1"></i> Simulated
+                                    </span>
+                                    <span th:if="${reg.confirmationEmailStatus == 'FAILED'}" class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 small fw-bold" th:title="${reg.confirmationEmailError}">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Failed
+                                    </span>
+                                    <span th:if="${reg.confirmationEmailStatus == null}" class="badge bg-light text-muted border rounded-pill px-2 py-1 small">
+                                        Pending
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a th:href="@{'/admin/events/' + ${reg.event.id} + '/participants'}" 
+                                       class="btn btn-sm btn-outline-primary rounded-pill px-3" 
+                                       title="View full event attendee roster">
+                                        <i class="bi bi-people me-1"></i> Attendees
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr id="noRegsRow" th:classappend="${registrations.isEmpty()} ? '' : 'd-none'">
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                    <span>No event registrations found matching your query.</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Interactive Client-side Filter Script -->
+<script>
+    function filterRegistrationsLive() {
+        const query = document.getElementById('regLiveSearch').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.reg-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const pass = row.getAttribute('data-pass') || '';
+            const name = row.getAttribute('data-name') || '';
+            const email = row.getAttribute('data-email') || '';
+            const roll = row.getAttribute('data-roll') || '';
+            const eventTitle = row.getAttribute('data-event') || '';
+
+            if (!query || pass.includes(query) || name.includes(query) || email.includes(query) || roll.includes(query) || eventTitle.includes(query)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const noRow = document.getElementById('noRegsRow');
+        if (noRow) {
+            noRow.classList.toggle('d-none', visibleCount > 0);
+        }
+
+        const countLabel = document.getElementById('regCountLabel');
+        if (countLabel) {
+            countLabel.innerHTML = `Showing <strong>${visibleCount}</strong> of ${rows.length} passes`;
+        }
+    }
+
+    function clearRegSearch() {
+        const input = document.getElementById('regLiveSearch');
+        if (input) {
+            input.value = '';
+            filterRegistrationsLive();
+        }
+    }
+</script>
+
+<!-- Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
