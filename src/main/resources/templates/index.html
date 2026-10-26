@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('CampusConnect | Discover & Register for College Events')}"></head>
+<body>
+
+<!-- Navbar with active tab 'home' -->
+<div th:replace="~{fragments/layout :: navbar('home')}"></div>
+
+<main class="py-4 py-lg-5">
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero-container mb-5">
+            <div class="row align-items-center g-4 g-xl-5">
+                <div class="col-lg-7">
+                    <div class="campus-tag-pill mb-3">
+                        <i class="bi bi-mortarboard-fill"></i>
+                        <span>Your Campus Event &amp; Registration Hub</span>
+                    </div>
+
+                    <h1 class="hero-heading mb-3">
+                        Discover &amp; register for campus events<span class="accent-dot">.</span>
+                    </h1>
+
+                    <p class="lead text-secondary mb-4 hero-lead">
+                        Workshops, hackathons, guest lectures, cultural fests — find what's happening across departments and save your spot in seconds.
+                    </p>
+
+                    <!-- Search Pill Box (Routes directly to Explore Page) -->
+                    <form th:action="@{/explore}" method="get" class="search-pill-box mb-4">
+                        <i class="bi bi-search text-muted me-2 fs-5"></i>
+                        <input type="text" name="keyword" placeholder="Search by title, category, or venue...">
+                        <button class="btn btn-indigo" type="submit">Search</button>
+                    </form>
+
+                    <!-- Interactive Gateway Buttons -->
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+                        <!-- Primary Interactive Button to Open Upcoming Events Page -->
+                        <a th:href="@{/explore}" class="btn btn-gradient-glow rounded-pill px-4 py-3 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-compass-fill fs-5"></i>
+                            <span>Explore Upcoming Events</span>
+                            <span class="badge bg-white text-indigo rounded-pill px-2 py-1 ms-1 fw-bold" th:text="${upcomingCount} + ' Live'">0 Live</span>
+                            <i class="bi bi-arrow-right fs-6"></i>
+                        </a>
+
+                        <a th:href="@{/register-account}" sec:authorize="isAnonymous()" class="btn btn-outline-dark rounded-pill px-4 py-3 fw-semibold">
+                            <i class="bi bi-person-plus me-1"></i> Create Student Account
+                        </a>
+
+                        <a th:href="@{/my-registrations}" sec:authorize="isAuthenticated()" class="btn btn-outline-indigo rounded-pill px-4 py-3 fw-semibold">
+                            <i class="bi bi-ticket-perforated me-1"></i> My Event Passes
+                        </a>
+                    </div>
+
+                    <!-- Trust Highlights Strip -->
+                    <div class="d-flex flex-wrap align-items-center gap-4 text-secondary small fw-semibold">
+                        <span class="d-flex align-items-center gap-2">
+                            <span class="dot-indicator bg-success"></span>
+                            <span>Live Database Seat Locking</span>
+                        </span>
+                        <span class="d-flex align-items-center gap-2">
+                            <i class="bi bi-shield-check text-indigo fs-5"></i>
+                            <span>Instant Digital Passes</span>
+                        </span>
+                        <span class="d-flex align-items-center gap-2">
+                            <i class="bi bi-building text-warning fs-5"></i>
+                            <span>Department Verified</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Hero Right Column: Spotlight Featured Event Card -->
+                <div class="col-lg-5">
+                    <div th:if="${featuredEvent != null}" class="featured-spotlight-card">
+                        <div class="spotlight-glass-content">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="featured-badge">
+                                    <i class="bi bi-star-fill text-warning me-1"></i> FEATURED SPOTLIGHT
+                                </span>
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-1 small fw-bold" th:text="${featuredEvent.category}">
+                                    Category
+                                </span>
+                            </div>
+
+                            <h3 class="fw-bold text-white mb-2 spotlight-title" th:text="${featuredEvent.title}">
+                                Featured Event Title
+                            </h3>
+
+                            <p class="text-white text-opacity-85 small mb-3 spotlight-desc" th:text="${featuredEvent.description}">
+                                Event description preview...
+                            </p>
+
+                            <div class="bg-black bg-opacity-25 rounded-3 p-3 mb-3 backdrop-blur border border-white border-opacity-15">
+                                <div class="d-flex align-items-center text-white small mb-2">
+                                    <i class="bi bi-calendar-event me-2 text-warning fs-6"></i>
+                                    <span class="fw-semibold" th:text="${#temporals.format(featuredEvent.eventDate, 'EEEE, dd MMMM yyyy')}">Date</span>
+                                </div>
+                                <div class="d-flex align-items-center text-white small">
+                                    <i class="bi bi-geo-alt me-2 text-warning fs-6"></i>
+                                    <span class="text-truncate fw-semibold" th:text="${featuredEvent.venue}">Venue</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between pt-1">
+                                <div>
+                                    <div class="text-white text-opacity-75 small text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Live Seats</div>
+                                    <div class="text-white fw-bold fs-5">
+                                        <span th:text="${featuredEvent.activeRegistrationsCount}">0</span> / <span th:text="${featuredEvent.capacity}">0</span> booked
+                                    </div>
+                                    <div class="small text-white text-opacity-85" style="font-size: 0.75rem;">
+                                        <i class="bi bi-check-circle-fill text-success me-1"></i><span th:text="${featuredEvent.availableSeats}">0</span> seats available
+                                    </div>
+                                </div>
+                                <a th:href="@{'/events/' + ${featuredEvent.id} + '/register'}" class="btn btn-light fw-bold px-4 py-2 rounded-pill text-dark shadow-sm hover-scale">
+                                    Register Now <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:unless="${featuredEvent != null}" class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white text-center">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-indigo bg-opacity-10 text-indigo rounded-circle p-4 mb-3 mx-auto" style="width: 80px; height: 80px;">
+                            <i class="bi bi-calendar2-range-fill fs-2"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">Campus Activity Portal</h4>
+                        <p class="text-secondary small mb-4">Official college hackathons, technical workshops, and cultural galas will appear here as soon as published.</p>
+                        <a th:href="@{/explore}" class="btn btn-indigo rounded-pill px-4 py-2 fw-semibold">
+                            Explore Event Catalog
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Statistics Strip (3-Column Metric Highlights) -->
+        <section class="mb-5">
+            <div class="row g-3 g-md-4">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper bg-indigo-subtle text-indigo">
+                            <i class="bi bi-calendar2-event-fill"></i>
+                        </div>
+                        <div class="stat-number" th:text="${upcomingCount}">0</div>
+                        <div class="stat-label">Upcoming Events</div>
+                        <div class="stat-sub">Live across departments</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper bg-amber-subtle text-amber">
+                            <i class="bi bi-mortarboard-fill"></i>
+                        </div>
+                        <div class="stat-number" th:text="${totalEvents}">0</div>
+                        <div class="stat-label">Total Events Hosted</div>
+                        <div class="stat-sub">Campus fests &amp; sprints</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper bg-sky-subtle text-sky">
+                            <i class="bi bi-check2-circle"></i>
+                        </div>
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Live Concurrency</div>
+                        <div class="stat-sub">Zero seat overbooking</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Category Discovery Showcase -->
+        <section class="mb-5">
+            <div class="text-center max-w-700 mx-auto mb-4">
+                <span class="badge rounded-pill bg-indigo bg-opacity-10 text-indigo px-3 py-1 fw-bold small text-uppercase">
+                    <i class="bi bi-grid-fill me-1"></i> Domains &amp; Categories
+                </span>
+                <h2 class="display-6 fw-bold mt-2 mb-2">Find Events Matching Your Passion</h2>
+                <p class="text-secondary">Click any category below to immediately browse dedicated upcoming events on our explore page.</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- Technical -->
+                <div class="col-md-6 col-lg-3">
+                    <a th:href="@{/explore(category='Technical')}" class="category-card tech-theme text-decoration-none d-block">
+                        <div class="category-icon-box">
+                            <i class="bi bi-code-slash"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Technical</h5>
+                        <p class="text-secondary small mb-3">AI &amp; Cloud summits, algorithm challenges, and developer conferences.</p>
+                        <span class="category-link-text">Browse Technical Events <i class="bi bi-arrow-right"></i></span>
+                    </a>
+                </div>
+
+                <!-- Workshop -->
+                <div class="col-md-6 col-lg-3">
+                    <a th:href="@{/explore(category='Workshop')}" class="category-card workshop-theme text-decoration-none d-block">
+                        <div class="category-icon-box">
+                            <i class="bi bi-tools"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Workshops</h5>
+                        <p class="text-secondary small mb-3">Hands-on hardware labs, IoT kits, UI/UX bootcamps, and robotics.</p>
+                        <span class="category-link-text">Browse Workshops <i class="bi bi-arrow-right"></i></span>
+                    </a>
+                </div>
+
+                <!-- Hackathon -->
+                <div class="col-md-6 col-lg-3">
+                    <a th:href="@{/explore(category='Hackathon')}" class="category-card hack-theme text-decoration-none d-block">
+                        <div class="category-icon-box">
+                            <i class="bi bi-lightning-charge-fill"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Hackathons</h5>
+                        <p class="text-secondary small mb-3">24-hour sprints, MVP pitching competitions, mentors, and prize pools.</p>
+                        <span class="category-link-text">Browse Hackathons <i class="bi bi-arrow-right"></i></span>
+                    </a>
+                </div>
+
+                <!-- Cultural -->
+                <div class="col-md-6 col-lg-3">
+                    <a th:href="@{/explore(category='Cultural')}" class="category-card cultural-theme text-decoration-none d-block">
+                        <div class="category-icon-box">
+                            <i class="bi bi-music-note-beamed"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">Cultural</h5>
+                        <p class="text-secondary small mb-3">Music galas, inter-college choreography, fine arts, and literary fests.</p>
+                        <span class="category-link-text">Browse Cultural Events <i class="bi bi-arrow-right"></i></span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Platform Features / "Why CampusConnect" Grid -->
+        <section class="mb-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                <div class="row align-items-center g-4">
+                    <div class="col-lg-5">
+                        <span class="badge rounded-pill bg-indigo bg-opacity-10 text-indigo px-3 py-1 fw-bold small text-uppercase mb-2">
+                            <i class="bi bi-stars me-1"></i> Purpose-Built Experience
+                        </span>
+                        <h2 class="h2 fw-bold text-dark mb-3">A University Platform Built for Students &amp; Faculty</h2>
+                        <p class="text-secondary mb-4">
+                            CampusConnect eliminates paper registrations and crowded auditorium queues. Every pass is verified, seat limits are strictly preserved, and confirmations reach your college email in real time.
+                        </p>
+                        <a th:href="@{/explore}" class="btn btn-indigo rounded-pill px-4 py-2 fw-bold">
+                            <i class="bi bi-compass me-1"></i> View All Upcoming Events
+                        </a>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="feature-item-box p-3 rounded-3 bg-light">
+                                    <div class="feature-icon text-indigo mb-2">
+                                        <i class="bi bi-shield-lock-fill fs-3"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Zero Overbooking</h6>
+                                    <p class="text-secondary small mb-0">Database concurrency ensures seat capacities are strictly adhered to.</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="feature-item-box p-3 rounded-3 bg-light">
+                                    <div class="feature-icon text-success mb-2">
+                                        <i class="bi bi-envelope-check-fill fs-3"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Verified Email Passes</h6>
+                                    <p class="text-secondary small mb-0">Instant confirmation passes sent to student inbox with registration ref.</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="feature-item-box p-3 rounded-3 bg-light">
+                                    <div class="feature-icon text-warning mb-2">
+                                        <i class="bi bi-arrow-repeat fs-3"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Seat Recycling</h6>
+                                    <p class="text-secondary small mb-0">Cancelled passes instantly reopen seats for waitlisted campus peers.</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="feature-item-box p-3 rounded-3 bg-light">
+                                    <div class="feature-icon text-primary mb-2">
+                                        <i class="bi bi-qr-code-scan fs-3"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Fast Entry Check-in</h6>
+                                    <p class="text-secondary small mb-0">Students present digital passes at venue entry for seamless admission.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Gateway Banner Section (Upcoming Events Gateway) -->
+        <section class="upcoming-gateway-section p-4 p-md-5 rounded-4 text-center text-white position-relative overflow-hidden shadow-lg">
+            <div class="position-relative" style="z-index: 2; max-width: 720px; margin: 0 auto;">
+                <span class="badge rounded-pill bg-white bg-opacity-20 backdrop-blur px-3 py-1 mb-3 text-uppercase fw-bold text-white small" style="letter-spacing: 0.5px;">
+                    <i class="bi bi-stars text-warning me-1"></i> Don't Miss Out
+                </span>
+                <h2 class="display-6 fw-extrabold mb-3 text-white">Ready to Discover What's Next?</h2>
+                <p class="text-white text-opacity-90 lead fs-6 mb-4">
+                    Explore all technical hackathons, guest seminars, design sprints, and cultural galas happening across all college departments.
+                </p>
+                <div class="d-flex flex-wrap justify-content-center gap-3">
+                    <!-- Interactive Button that opens the dedicated Upcoming Events page -->
+                    <a th:href="@{/explore}" class="btn btn-light btn-lg rounded-pill px-5 py-3 fw-bold text-indigo shadow hover-scale d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-calendar2-week-fill fs-5 text-indigo"></i>
+                        <span>View All Upcoming Events</span>
+                        <span class="badge bg-indigo text-white rounded-pill px-2 py-1 ms-1" th:text="${upcomingCount} + ' Available'">0 Available</span>
+                        <i class="bi bi-arrow-right fs-5"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<!-- Bootstrap Scripts -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
